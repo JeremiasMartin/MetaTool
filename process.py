@@ -3,12 +3,10 @@ import subprocess
 import pandas as pd
 
 
-exiftool_exe = r'E:\exiftool.exe'
-root_path = r'E:\PARA_TESTEO_SCRIPT_RTK'
-ejemplo = r'E:\ejemplo.csv'
+exiftool_exe = r'C:\Users\Jeremias\Documents\exiftool.exe'
+root_path = r'C:\Users\Jeremias\Documents\PARA_TESTEO_SCRIPT_RTK'
+ejemplo = r'C:\Users\Jeremias\Documents\ejemplo.csv'
 
-
-RTKFLAG0, RTKFLAG16, RTKFLAG34, RTKFLAG50 = 0, 0, 0, 0
 
 # Generating csv file exiftool results (filename - rtkflag - CameraModel)
 csv = open(ejemplo, "w")
@@ -25,30 +23,48 @@ csv.close()
 
 # Generating txt file, calculating data from csv
 
-df = pd.read_csv(ejemplo, header=None, sep='\t', usecols=[1])
+rtkflags = pd.read_csv(ejemplo, header=None, sep='\t', usecols=[1])
+cameramodels = pd.read_csv(ejemplo, header=None, sep='\t', usecols=[2])
 
-for i in df.values:
-    if(i == '16'):
-        RTKFLAG16 = RTKFLAG16 + 1
-    elif(i == '50'):
-        RTKFLAG50 = RTKFLAG50 + 1
-    elif(i == '0'):
-        RTKFLAG0 = RTKFLAG0 + 1
-    elif(i == '34'):
-        RTKFLAG34 = RTKFLAG34 + 1
 
-TOTAL = df.size
-OTHERS = TOTAL - RTKFLAG0 - RTKFLAG16 - RTKFLAG34 - RTKFLAG50
+rtkflagsargs = {
+    '0': 0,
+    '16': 0,
+    '34': 0,
+    '50': 0
+}
 
-txt = open(r'E:\final.json', "w")
-txt.write('{\n "P4RTK":{\n "0": ' + str(RTKFLAG0) + ',\n "16": ' + str(RTKFLAG16) + ',\n 34: ' + str(RTKFLAG34) + ',\n 50: ' +
-          str(RTKFLAG50) + '\n }, \n other: ' + str(OTHERS) + ', total: ' + str(TOTAL) + '}')
+for i in rtkflags.values:
+    if(i[0] != '-'):
+        rtkflagsargs[i[0]] += 1
+
+
+cameramodelsargs = {
+    'FC350': 0,
+    'FC300X': 0,
+    'FC6310R': 0,
+    'FC610S': 0,
+    'L1D-20c': 0
+}
+
+for i in cameramodels.values:
+    cameramodelsargs[i[0]] += 1
+
+
+TOTAL = rtkflags.size
+
+# writing output to a txt file
+txt = open(r'C:\Users\Jeremias\Documents\final.json', "w")
+txt.write('{\n')
+
+for i in cameramodelsargs:
+    value = cameramodelsargs.get(i)
+    if(value > 0):
+        # Check RTK flags if any image was taken with FC6310R model
+        if(i == 'FC6310R'):
+            txt.write('"FC6310R":{\n "0": ' + str(rtkflagsargs['0']) + ',\n "16": ' + str(
+                rtkflagsargs['16']) + ',\n "34": ' + str(rtkflagsargs['34']) + ',\n "50": ' + str(rtkflagsargs['50']) + '\n },')
+        txt.write('\n"' + i + '"' + ': ' + str(value) + ',')
+
+txt.write('\n "_total": ' + str(TOTAL) + '\n }')
 txt.close()
-
-
-# FC350 = INSPIRE1
-# FC300X = P3
-# FC6310 = P4P
-# FC610S = P4PV2
-# FC6310R = P4PRTK
-# L1D-20C = MAVIC2P

@@ -1,15 +1,18 @@
-import os
 import subprocess
 import json
 
-exiftool_exe = r'.\exiftool.exe'
-root_path = r'.\PARA_TESTEO_SCRIPT_RTK'
-ejemplo = r'.\ejemplo.json'
+exiftool_exe = r'E:\exiftool.exe'
+root_path = r'E:\PARA_TESTEO_SCRIPT_RTK'
+data = r'E:\data.json'
 
 
-# Generating csv file exiftool results (filename - rtkflag - CameraModel)
-jsonfile = open(ejemplo, "w")
+# Generating json file using exiftool (filename - rtkflag - cameraModel)
 exiftool_command = [exiftool_exe, root_path, '-filename',
-                    '-rtkflag', '-Model', '-q', '-j', '-r', '-W+', ejemplo]  # https://www.exiftool.org/exiftool_pod.html#OPTIONS
-process = subprocess.run(exiftool_command)
-jsonfile.close()
+                    '-rtkflag', '-Model', '-q', '-json', '-r']  # https://www.exiftool.org/exiftool_pod.html#OPTIONS
+
+with open(data, "w") as f:
+    process = subprocess.run(exiftool_command, stdout=f)
+
+
+rtkflags = {}
+cameramodels = {}

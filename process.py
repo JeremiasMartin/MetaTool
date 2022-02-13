@@ -6,6 +6,14 @@ root_path = r'C:\PARA_TESTEO_SCRIPT_RTK'
 data = r'C:\data.json'
 
 
+def checkDictionary(i, string, dictionary):
+
+    if i[string] not in dictionary:
+        dictionary[i[string]] = 1
+    else:
+        dictionary[i[string]] += 1
+
+
 # Generating json file using exiftool (filename - rtkflag - cameraModel)
 exiftool_command = [exiftool_exe, root_path, '-filename',
                     '-rtkflag', '-Model', '-q', '-json', '-fast', '-r', '-ext', 'JPG']  # https://www.exiftool.org/exiftool_pod.html#OPTIONS
@@ -23,15 +31,9 @@ with open(data) as f:
 
 for i in contenido:
     if('RtkFlag' in i):
-        if(i['RtkFlag'] not in rtkflags):
-            rtkflags[i["RtkFlag"]] = 1
-        else:
-            rtkflags[i["RtkFlag"]] += 1
+        checkDictionary(i, "RtkFlag", rtkflags)
     if('Model' in i):
-        if(i['Model'] not in cameramodels):
-            cameramodels[i["Model"]] = 1
-        else:
-            cameramodels[i["Model"]] += 1
+        checkDictionary(i, "Model", cameramodels)
 
 
 with open(r"C:\export.json", "w") as outfile:

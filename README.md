@@ -6,7 +6,6 @@ When the value of the status bit is 50, it is in the RTK fixed solution state, a
 
 
 List of correspondences between the UAV and the camera model:
---------------------------- o -------------------------------
 
 - DJI MAVIC 3 - 
 - DJI MINI SE -   
@@ -34,5 +33,3 @@ List of correspondences between the UAV and the camera model:
 - PHANTOM 3 SE - 
 - INSPIRE 2 -  FC6520 (ZenMuse X5S), FC6510 (X4S),  X7S 
 - INSPIRE 1 SERIES - FC350 (*)
- 
- --------------------------- o -------------------------------

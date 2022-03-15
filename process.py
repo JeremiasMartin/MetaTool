@@ -1,41 +1,46 @@
-import subprocess
 import json
+import tempfile
+import exiftool
+from os import walk, sep, path
+import sys
 
-exiftool_exe = r'C:\exiftool.exe'
-root_path = r'C:\PARA_TESTEO_SCRIPT_RTK'
-data = r'C:\data.json'
+try:
+    root_path = sys.argv[1]
 
+    tmp_folder = f'{tempfile.gettempdir()}'
+    export = r".\export.json"
 
-def checkDictionary(i, string, dictionary):
+    def checkValueInDict(i, string, dictionary):
+        '''
+        Check if the value is in the dictionary or not. If it's in the dict, increments its occurrence, otherwise adds it for the first time
+        '''
+        dictionary[i[string]
+                   ] = 1 if i[string] not in dictionary else dictionary[i[string]]+1
 
-    if i[string] not in dictionary:
-        dictionary[i[string]] = 1
-    else:
-        dictionary[i[string]] += 1
+    rtk = {}
+    noRTK = {}
+    rtkflag = {}
 
+    extensions = ['.JPG', '.jpg', '.JPEG', '.jpeg']
 
-# Generating json file using exiftool (filename - rtkflag - cameraModel)
-exiftool_command = [exiftool_exe, root_path, '-filename',
-                    '-rtkflag', '-Model', '-q', '-json', '-fast', '-r', '-ext', 'JPG']  # https://www.exiftool.org/exiftool_pod.html#OPTIONS
+    params = ["Rtkflag", "Model"]
 
-with open(data, "w") as f:
-    process = subprocess.run(exiftool_command, stdout=f)
+    for subdir, dirs, files in walk(root_path):
+        for file in files:
+            filepath = subdir + sep + file
+            if(path.splitext(file)[1] in extensions):
+                with exiftool.ExifToolHelper() as et:
+                    metadata = et.get_tags(filepath, params)
+                    for d in metadata:
+                        if 'XMP:RtkFlag' in d:
+                            checkValueInDict(d, "XMP:RtkFlag", rtkflag)
+                            rtk[d["EXIF:Model"]] = rtkflag
+                        elif("EXIF:Model" in d):
+                            checkValueInDict(d, "EXIF:Model", noRTK)
 
+    with open(export, "w") as outfile:
+        rtk.update(noRTK)
+        json.dump(rtk, outfile)
 
-rtkflags = {}
-cameramodels = {}
-
-with open(data) as f:
-    contenido = json.load(f)
-
-
-for i in contenido:
-    if('RtkFlag' in i):
-        checkDictionary(i, "RtkFlag", rtkflags)
-    if('Model' in i):
-        checkDictionary(i, "Model", cameramodels)
-
-
-with open(r"C:\export.json", "w") as outfile:
-    rtkflags.update(cameramodels)
-    json.dump(rtkflags, outfile)
+except IndexError:
+    print("No file dropped")

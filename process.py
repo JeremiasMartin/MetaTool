@@ -1,46 +1,57 @@
+from os import sep
+import subprocess
 import json
-import tempfile
-import exiftool
-from os import walk, sep, path
 import sys
+import tempfile
+
+tmp_folder = tempfile.gettempdir()
+exiftool_exe = '.\exiftool.exe'
+tmp_output = f'{tmp_folder}\data.json'
+
+
+def checkDictionary(i, string, dictionary):
+
+    dictionary[i[string]
+               ] = 1 if i[string] not in dictionary else dictionary[i[string]]+1
+
+
+rtkflag = {}
+noRTK = {}
+rtk = {}
 
 try:
-    root_path = sys.argv[1]
 
-    tmp_folder = f'{tempfile.gettempdir()}'
-    export = r".\export.json"
+    for arg in sys.argv[1:]:
+        root_path = arg
+        folder = root_path.split(sep)[-1]
 
-    def checkValueInDict(i, string, dictionary):
-        '''
-        Check if the value is in the dictionary or not. If it's in the dict, increments its occurrence, otherwise adds it for the first time
-        '''
-        dictionary[i[string]
-                   ] = 1 if i[string] not in dictionary else dictionary[i[string]]+1
+        # Generating json file using exiftool (RtkFlag - cameraModel)
+        exiftool_command = [exiftool_exe, root_path,
+                            '-rtkflag', '-Model', '-q', '-json', '-fast', '-r', '-ext', 'JPG', '-ext', 'jpg','-ext','jpeg', '-ext', 'JPEG']  # https://www.exiftool.org/exiftool_pod.html#OPTIONS
 
-    rtk = {}
-    noRTK = {}
-    rtkflag = {}
+        with open(tmp_output, "w") as f:
+            process = subprocess.run(exiftool_command, stdout=f)
 
-    extensions = ['.JPG', '.jpg', '.JPEG', '.jpeg']
+        with open(tmp_output) as f:
+            contenido = json.load(f)
 
-    params = ["Rtkflag", "Model"]
+        for i in contenido:
+            if('RtkFlag' in i):
+                checkDictionary(i, "RtkFlag", rtkflag)
+                rtk[i["Model"]] = rtkflag
+            elif('Model' in i):
+                checkDictionary(i, "Model", noRTK)
 
-    for subdir, dirs, files in walk(root_path):
-        for file in files:
-            filepath = subdir + sep + file
-            if(path.splitext(file)[1] in extensions):
-                with exiftool.ExifToolHelper() as et:
-                    metadata = et.get_tags(filepath, params)
-                    for d in metadata:
-                        if 'XMP:RtkFlag' in d:
-                            checkValueInDict(d, "XMP:RtkFlag", rtkflag)
-                            rtk[d["EXIF:Model"]] = rtkflag
-                        elif("EXIF:Model" in d):
-                            checkValueInDict(d, "EXIF:Model", noRTK)
+        filename_output = input(
+            f"Ingrese el nombre del archivo json para la carpeta {folder}: ")
 
-    with open(export, "w") as outfile:
-        rtk.update(noRTK)
-        json.dump(rtk, outfile)
+        with open(f".\{filename_output}.json", "w") as outfile:
+            rtk.update(noRTK)
+            json.dump(rtk, outfile)
+
+        rtk.clear()
+        rtkflag.clear()
+        noRTK.clear()
 
 except IndexError:
     print("No file dropped")

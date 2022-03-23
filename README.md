@@ -4,9 +4,11 @@ The script calculates the number of images taken by each UAV (according to its c
 RTK Flag identifies the status of RTK: 0-no positioning, 16-point positioning mode, 34-RTK floating point solution, 50-RTK fixed solution.
 When the value of the status bit is 50, it is in the RTK fixed solution state, and the positioning accuracy is the highest at this time.
 
+It also allows extracting subtitles embedded in MP4 and MOV files, using ffmpeg tool, generating an SRT file.
 
-List of correspondences between the UAV and the camera model:
 
+
+# List of correspondences between the UAV and the camera model:
 - DJI MAVIC 3 - 
 - DJI MINI SE -   
 - DJI AIR 2S - FC3411 (*)

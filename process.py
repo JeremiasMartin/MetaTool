@@ -3,32 +3,23 @@ import json
 import sys
 import tempfile
 import ffmpeg
+import os
 
 
-tmp_folder = tempfile.gettempdir()
-exiftool_exe = '.\exiftool.exe'
-tmp_output = f'{tmp_folder}\data.json'
+TEMP_FOLDER = tempfile.gettempdir()
+EXIFTOOL_EXE = '.\exiftool.exe'
+TEMP_OUTPUT_FILE = f'{TEMP_FOLDER}\data.json'
 
 
 def checkDictionary(i, string, dictionary):
-
-    dictionary[i[string]
-               ] = 1 if i[string] not in dictionary else dictionary[i[string]]+1
-
-
-print()
-print('''
-    █████╗ ░██████╗░░█████╗░███╗░░██╗███████╗██████╗░░█████╗░████████╗░█████╗░
-    ██╔══██╗██╔══██╗██╔══██╗████╗░██║██╔════╝██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗
-    ██║░░██║██████╔╝██║░░██║██╔██╗██║█████╗░░██║░░██║███████║░░░██║░░░███████║
-    ██║░░██║██╔══██╗██║░░██║██║╚████║██╔══╝░░██║░░██║██╔══██║░░░██║░░░██╔══██║
-    ██████╔╝██║░░██║╚█████╔╝██║░╚███║███████╗██████╔╝██║░░██║░░░██║░░░██║░░██║
-    ╚═════╝░╚═╝░░╚═╝░╚════╝░╚═╝░░╚══╝╚══════╝╚═════╝░╚═╝░░╚═╝░░░╚═╝░░░╚═╝░░╚═╝
-    ''')
-print()
+    """
+    Adds an entry to the dictionary, counting the number of times the key appears in the dictionary.
+    """
+    dictionary[i[string]] = 1 if i[string] not in dictionary else dictionary[i[string]]+1
 
 
 
+# Dictionaries to store camera model and RTK flag counts
 rtkflag = {}
 noRTK = {}
 rtk = {}
@@ -36,41 +27,42 @@ total = {}
 cont = 0
 
 try:
+
     sys.argv[1]
-    filename_output = input(
-        "Ingrese el nombre del archivo y presione ENTER: ")
+    filename_output = input("Enter the output filename and press ENTER: ")
 
-    with open(f".\{filename_output}.json", "w") as outfile:
+    with open(os.path.join(".", f"{filename_output}.json"), "w") as outfile:
         for arg in sys.argv[1:]:
-
             if(not(arg.endswith(".MOV") | arg.endswith(".MP4"))):
-                # Generating json file using exiftool (RtkFlag - cameraModel)
-                exiftool_command = [exiftool_exe, arg,
-                                    '-rtkflag', '-Model', '-q', '-json', '-fast', '-r', '-ext', 'JPG', '-ext', 'jpg', '-ext', 'jpeg', '-ext', 'JPEG']  # https://www.exiftool.org/exiftool_pod.html#OPTIONS
+                exiftool_command = [EXIFTOOL_EXE, arg, '-rtkflag', '-Model', '-q', '-json', '-fast', '-r', '-ext', 'JPG', '-ext', 'jpg', '-ext', 'jpeg', '-ext', 'JPEG']
 
-                with open(tmp_output, "w") as f:
+                # Run the exiftool command and store the output in a temporary file
+                with open(TEMP_OUTPUT_FILE, "w") as f:
                     subprocess.run(exiftool_command, stdout=f)
 
-                with open(tmp_output) as f:
+                with open(TEMP_OUTPUT_FILE) as f:
                     contenido = json.load(f)
 
-                for i in contenido:
-                    if('RtkFlag' in i):
-                        checkDictionary(i, "RtkFlag", rtkflag)
-                        rtk[i["Model"]] = rtkflag
-                    elif('Model' in i):
-                        checkDictionary(i, "Model", noRTK)
+                for data in contenido:
+                    if('RtkFlag' in data):
+                        checkDictionary(data, "RtkFlag", rtkflag)
+                        rtk[data["Model"]] = rtkflag
+                    elif('Model' in data):
+                        checkDictionary(data, "Model", noRTK)
                 cont += len(contenido)
 
             elif((arg.endswith(".MP4")) | arg.endswith(".MOV")):
-                print("Hemos detectado un archivo con extensión mp4/mov")
+                # If the file is an MP4 or MOV, convert it to SRT format
+                print("We detected an MP4/MOV file.")
                 stream = ffmpeg.input(arg)
                 stream = ffmpeg.output(stream, f'{filename_output}.SRT')
                 ffmpeg.run(stream)
         
+        # Add the total count to the RTK dictionary
         total["TOTAL"] = cont
         rtk.update(noRTK)
         rtk.update(total)
+
         json.dump(rtk, outfile)
     
 except IndexError:

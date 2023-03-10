@@ -1,58 +1,73 @@
 import json
 import tempfile
 import exiftool
-from os import walk, sep, path
+import os
 import sys
+import ffmpeg
 
-tmp_folder = tempfile.gettempdir()
+# Utiliza variables en lugar de valores constantes
+EXTENSIONS = ('.JPG', '.jpg', '.JPEG', '.jpeg')
+PARAMS = ["Rtkflag", "Model"]
+TMP_FOLDER = tempfile.gettempdir()
 
 
-def checkValueInDict(i, string, dictionary):
+def check_value_in_dict(i, string, dictionary):
     '''
     Check if the value is in the dictionary or not. If it's in the dict, increments its occurrence, otherwise adds it for the first time
     '''
-    dictionary[i[string]
-               ] = 1 if i[string] not in dictionary else dictionary[i[string]]+1
+    dictionary[i[string]] = 1 if i[string] not in dictionary else dictionary[i[string]] + 1
 
-
-rtk = {}
-noRTK = {}
-rtkflag = {}
-
-extensions = ['.JPG', '.jpg', '.JPEG', '.jpeg']
-
-params = ["Rtkflag", "Model"]
 
 try:
-
     for arg in sys.argv[1:]:
         root_path = arg
-        folder = root_path.split(sep)[-1]
+        folder = os.path.basename(root_path)
 
-        for subdir, dirs, files in walk(root_path):
+        rtkflag = {}
+        no_rtk = {}
+        rtk = {}
+        total = {}
+        cont = 0
+        
+        for subdir, dirs, files in os.walk(root_path):
+
             for file in files:
-                filepath = subdir + sep + file
-                print('{} processing...'.format(file))
-                if(path.splitext(file)[1] in extensions):
+
+                filepath = os.path.join(subdir, file)
+                ext = os.path.splitext(file)[1]
+
+                if ext in EXTENSIONS:
+
                     with exiftool.ExifToolHelper() as et:
-                        metadata = et.get_tags(filepath, params)
+
+                        metadata = et.get_tags([filepath], PARAMS)
+
                         for d in metadata:
+
                             if 'XMP:RtkFlag' in d:
-                                checkValueInDict(d, "XMP:RtkFlag", rtkflag)
+                                check_value_in_dict(d, "XMP:RtkFlag", rtkflag)
                                 rtk[d["EXIF:Model"]] = rtkflag
+
                             elif("EXIF:Model" in d):
-                                checkValueInDict(d, "EXIF:Model", noRTK)
+                                check_value_in_dict(d, "EXIF:Model", no_rtk)
 
-        filename_output = input(
-            f"Ingrese el nombre del archivo json para la carpeta {folder}: ")
+                        cont += len(metadata)
 
-        with open(f".\{filename_output}.json", "w") as outfile:
-            rtk.update(noRTK)
+                elif ext in ('.MP4', '.MOV'):
+                    print(f"Hemos detectado un archivo con extensión {ext}")
+                    filename_output = os.path.splitext(file)[0]
+                    output_path = os.path.join(TMP_FOLDER, f'{filename_output}.SRT')
+                    stream = ffmpeg.input(filepath)
+                    stream = ffmpeg.output(stream, output_path)
+                    ffmpeg.run(stream)
+
+        filename_output = input(f"Ingrese el nombre del archivo json para la carpeta {folder}: ")
+        with open(os.path.join('.', f"{filename_output}.json"), "w") as outfile:
+            total["TOTAL"] = cont
+            rtk.update(no_rtk)
+            rtk.update(total)
             json.dump(rtk, outfile)
-
-        rtk.clear()
-        rtkflag.clear()
-        noRTK.clear()
 
 except IndexError:
     print("No file dropped")
+

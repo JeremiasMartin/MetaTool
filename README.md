@@ -5,8 +5,15 @@ RTK Flag identifies the status of RTK: 0-no positioning, 16-point positioning mo
 When the value of the status bit is 50, it is in the RTK fixed solution state, and the positioning accuracy is the highest at this time.
 
 
-List of correspondences between the UAV and the camera model:
+# How to Use
+- Download exiftool.exe from https://exiftool.org/.
+- Download ffmpeg.exe from https://ffmpeg.org/.
+- Agregar la ruta a la variable de entorno PATH.
+- pip install ffmpeg-python.
+- pip install PyExifTool.
 
+
+# List of correspondences between the UAV and the camera model:
 - DJI MAVIC 3 - 
 - DJI MINI SE -   
 - DJI AIR 2S - FC3411 (*)

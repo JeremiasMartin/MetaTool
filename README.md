@@ -7,10 +7,10 @@ When the value of the status bit is 50, it is in the RTK fixed solution state, a
 It also allows extracting subtitles embedded in MP4 and MOV files, using ffmpeg tool, generating an SRT file.
 
 # How to Use
-- Install Exiftool exe.
-- Pip install ffmpeg.
+- pip install ffmpeg.
+- Download Exiftool exe.
 - Set Exiftool path (line 9 process.py).
-- Execute 'python process.py 'PathFolder/'.
+- Execute 'python process.py 'files-folders-path'.
 
 # List of correspondences between the UAV and the camera model:   
 - DJI AIR 2S - FC3411

@@ -75,7 +75,7 @@ try:
                 elif('Model' in data):
                     checkDictionary(data, "Model", noRTK)
                 print(f"Processed file: {data['SourceFile']}")
-                cont += len(contenido)
+            cont += len(contenido)
 
         # Add the total count to the RTK dictionary
         total["TOTAL"] = cont
